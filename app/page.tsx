@@ -23,6 +23,7 @@ export default function Home() {
     budget: '',
     message: '',
   })
+  const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -33,9 +34,33 @@ export default function Home() {
     setFormData(prev => ({ ...prev, budget: value }))
   }
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Form submitted:', formData)
+    setFormStatus('sending')
+    try {
+      const fullMessage = [
+        formData.message,
+        formData.company && `Company: ${formData.company}`,
+        formData.budget && `Budget: ${formData.budget}`,
+      ]
+        .filter(Boolean)
+        .join('\n\n')
+      const res = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          message: fullMessage,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) throw new Error('Failed to send')
+      setFormStatus('success')
+      setFormData({ name: '', email: '', company: '', budget: '', message: '' })
+    } catch {
+      setFormStatus('error')
+    }
   }
 
   const navLinks = [
@@ -225,9 +250,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <span className="text-sm font-bold text-primary-foreground">SYS</span>
-              </div>
+              <Image
+                src="/logoSys.png"
+                alt="SYSTMATIIX"
+                width={40}
+                height={40}
+                className="w-20 h-20 rounded-lg object-contain"
+              />
               <span className="font-bold text-lg hidden sm:block">SYSTMATIIX</span>
             </div>
 
@@ -257,7 +286,7 @@ export default function Home() {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="bg-background border-border">
-                  <div className="flex flex-col gap-6 mt-8">
+                  <div className="flex flex-col gap-6 mt-8 p-4">
                     {navLinks.map(link => (
                       <a
                         key={link.href}
@@ -523,7 +552,7 @@ export default function Home() {
       </section>
 
       {/* Testimonials */}
-      <section id="testimonials" className="py-16 md:py-24">
+      {/* <section id="testimonials" className="py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">What Our Clients Say</h2>
@@ -549,10 +578,10 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-16 md:py-24 bg-card/30">
+      {/* <section id="pricing" className="py-16 md:py-24 bg-card/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Transparent Pricing</h2>
@@ -599,7 +628,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* FAQ Section */}
       <section id="faq" className="py-16 md:py-24">
@@ -699,8 +728,22 @@ export default function Home() {
                 />
               </div>
 
-              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-                Send Message
+              {formStatus === 'success' && (
+                <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+                  Message sent! We&apos;ll get back to you within 24 hours.
+                </p>
+              )}
+              {formStatus === 'error' && (
+                <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                  Something went wrong. Please try again or email us directly.
+                </p>
+              )}
+              <Button
+                type="submit"
+                disabled={formStatus === 'sending'}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-70"
+              >
+                {formStatus === 'sending' ? 'Sending...' : 'Send Message'}
               </Button>
             </form>
           </Card>
@@ -708,15 +751,15 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             <div className="text-center">
               <p className="text-foreground/60 text-sm mb-1">Email</p>
-              <p className="font-semibold text-foreground">hello@systmatiix.com</p>
+              <p className="font-semibold text-foreground">eslamsemedo@gmail.com</p>
             </div>
             <div className="text-center">
               <p className="text-foreground/60 text-sm mb-1">WhatsApp</p>
-              <p className="font-semibold text-foreground">+1 (555) 123-4567</p>
+              <p className="font-semibold text-foreground">01015189828</p>
             </div>
             <div className="text-center">
               <p className="text-foreground/60 text-sm mb-1">Location</p>
-              <p className="font-semibold text-foreground">San Francisco, CA</p>
+              <p className="font-semibold text-foreground">Egypt, Hurghdara</p>
             </div>
           </div>
         </div>
